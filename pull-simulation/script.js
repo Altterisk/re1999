@@ -66,7 +66,7 @@ class GachaBanner {
             // Check if it's rate-up
             let isRateUp = false;
             
-            if (this.guaranteedRateUp) {
+            if (this.guaranteedRateUp || this.type === 'ripple') {
                 isRateUp = true;
                 this.guaranteedRateUp = false;
             } else {
@@ -83,17 +83,34 @@ class GachaBanner {
     }
 }
 
-function simulateSingleRun(totalPulls, normalTargets, rippleTargets, initialPity, isNextGuaranteed) {
+function simulateSingleRun(totalPulls, normalTargets, limitedTargets, rippleTargets, initialPity, isNextGuaranteed) {
     const normalBanner = new GachaBanner('normal', isNextGuaranteed, initialPity);
     
     let normalGot = 0;
+    let limitedGot = 0;
     let rippleGot = 0;
     let pullsUsed = 0;
     
-    // Ripple targets are guaranteed with first pull per patch
-    // So we just need rippleTargets pulls for ripple units
-    pullsUsed += rippleTargets;
-    rippleGot = rippleTargets;
+    // First, pull for Ripple targets
+    // Each Ripple target gets its own banner where first 6★ is guaranteed rate-up
+    for (let i = 0; i < rippleTargets; i++) {
+        const rippleBanner = new GachaBanner('ripple', true, 0); // Start fresh, first 6★ guaranteed rate-up
+        
+        while (pullsUsed < totalPulls) {
+            const result = rippleBanner.pull();
+            pullsUsed++;
+            
+            if (result.is6Star && result.isRateUp) {
+                rippleGot++;
+                break; // Got this Ripple target, move to next
+            }
+        }
+        
+        // If we ran out of pulls before getting this Ripple target, stop
+        if (rippleGot < i + 1) {
+            break;
+        }
+    }
     
     // Then try to get normal/limited targets
     while (normalGot < normalTargets && pullsUsed < totalPulls) {
@@ -102,6 +119,21 @@ function simulateSingleRun(totalPulls, normalTargets, rippleTargets, initialPity
         
         if (result.is6Star && result.isRateUp) {
             normalGot++;
+        }
+    }
+
+    let extraPity = 0;
+    while (limitedGot < limitedTargets && pullsUsed < totalPulls) {
+        const result = normalBanner.pull();
+        pullsUsed++;
+        if (result.is6Star && result.isRateUp) {
+            limitedGot++;
+        }
+        extraPity++;
+        // Every 200 pulls, guaranteed limited debut
+        if (extraPity >= 200) {
+            limitedGot++;
+            extraPity = 0;
         }
     }
     
@@ -117,7 +149,9 @@ async function runSimulation() {
     const currentPity = parseInt(document.getElementById('currentPity').value) || 0;
     const nextGuaranteed = document.getElementById('nextGuaranteed').checked;
     const normalTargets = parseInt(document.getElementById('normalTargets').value) || 0;
+    const limitedTargets = parseInt(document.getElementById('limitedTargets').value) || 0;
     const rippleTargets = parseInt(document.getElementById('rippleTargets').value) || 0;
+    const simulations = parseInt(document.getElementById('simulations').value) || 10000;
     
     let totalPulls = Math.floor(clearDrops / 180) + unilogs;
     
@@ -151,13 +185,12 @@ async function runSimulation() {
     document.getElementById('results').style.display = 'none';
     document.getElementById('detailsCard').style.display = 'none';
     
-    const simulations = 10000;
     let successCount = 0;
     let totalLeftover = 0;
     let pullsUsedData = [];
     
     for (let i = 0; i < simulations; i++) {
-        const result = simulateSingleRun(totalPulls, normalTargets, rippleTargets, currentPity, nextGuaranteed);
+        const result = simulateSingleRun(totalPulls, normalTargets, limitedTargets, rippleTargets, currentPity, nextGuaranteed);
         
         if (result.success) {
             successCount++;

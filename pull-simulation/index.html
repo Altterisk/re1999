@@ -89,11 +89,16 @@
                     
                     <h5 class="mb-3 mt-4">Target Units</h5>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label for="normalTargets" class="form-label">Normal/Limited Target Units</label>
                             <input type="number" class="form-control" id="normalTargets" min="0" value="1">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label for="limitedTargets" class="form-label">Limited Debut Target Units</label>
+                            <input type="number" class="form-control" id="limitedTargets" min="0" value="0">
+                            <small class="text-muted">200 pulls gives 1 copy</small>
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label for="rippleTargets" class="form-label">Ripple Target Units</label>
                             <input type="number" class="form-control" id="rippleTargets" min="0" value="0">
                             <small class="text-muted">Uses guaranteed first pull per patch</small>
@@ -104,10 +109,14 @@
                         <div class="col-12 mb-3">
                             <label class="form-label">Total Available Pulls: <span id="totalPulls" class="fw-bold">0</span></label>
                         </div>
+                        <div class="col-12 mb-3">
+                            <label for="simulations" class="form-label">Number of Simulations (1 - 100,000)</label>
+                            <input type="number" class="form-control" id="simulations" min="1" value="10000" max="100000">
+                        </div>
                     </div>
                     
                     <button class="btn btn-primary btn-lg w-100" onclick="runSimulation()">
-                        Run 10,000 Simulations
+                        Run Simulations
                     </button>
                 </div>
 
